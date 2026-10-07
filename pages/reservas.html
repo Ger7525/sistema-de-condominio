@@ -1,0 +1,7 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reservas - Laguna Hall</title><link rel="stylesheet" href="../css/estilo.css"></head>
+<body><header><div class="head"><div><div class="brand">🏢 Edifício Laguna Hall</div><div class="sub">Reservas e solicitações</div></div><div id="identidade"></div></div></header><main>
+<nav class="menu" id="menu"></nav>
+<div class="card"><h2>📅 Disponibilidade de Reservas</h2><div class="grid"><div><label>Espaço</label><select id="espaco"><option>Salão de Festas</option><option>Churrasqueira</option></select></div><div><label>Mês</label><input id="mes" type="month"></div></div><p class="muted">Verde = disponível. Vermelho = reservado. Clique em uma data disponível para solicitar.</p><div id="calendario" class="calendar"></div></div>
+<div class="card" id="solicitacao" style="display:none"><h2>📝 Solicitar Reserva</h2><div class="grid"><div><label>Data</label><input id="dataReserva" type="date" readonly></div><div><label>Horário</label><input id="horario" placeholder="Ex.: 18:00 às 23:00"></div></div><label style="margin-top:15px">Observação</label><textarea id="obsReserva" maxlength="500"></textarea><div class="actions"><button onclick="solicitarReserva()">Enviar Solicitação</button></div></div>
+<div class="card"><h2>📋 Histórico</h2><div id="historico"></div></div>
+</main><script src="../js/dados_moradores.js"></script><script src="../js/sistema.js"></script><script src="../js/reservas.js"></script></body></html>

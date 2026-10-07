@@ -1,0 +1,11 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Plantão - Laguna Hall</title><link rel="stylesheet" href="../css/estilo.css"></head>
+<body><header><div class="head"><div><div class="brand">🏢 Edifício Laguna Hall</div><div class="sub">Painel de Plantão da Portaria</div></div><div id="operadorTopo"></div></div></header><main>
+<nav class="menu"><a class="btn" href="portaria_plantao.html">🛎️ Plantão</a><a class="btn btn-secondary" href="portaria_entregas.html">📦 Entregas</a><a class="btn btn-secondary" href="reservas.html">📅 Reservas</a><a class="btn btn-secondary" href="chat.html">💬 Chat</a><button class="btn-danger" onclick="sair()">Sair</button></nav>
+<div class="profile"><b>Operador:</b> <span id="op"></span> &nbsp; | &nbsp; <b>Data:</b> <span id="data"></span></div>
+<div class="card"><h2>📋 Dados do Plantão</h2><div class="grid"><div><label>Porteiro saindo</label><select id="saindo"><option value="">Selecione</option></select></div><div><label>Porteiro assumindo</label><select id="assumindo"><option value="">Selecione</option></select></div></div></div>
+<div class="card"><h2>📦 Entregas Pendentes</h2><div id="pendentes"></div></div>
+<div class="card"><h2>🧰 Prestadores de Serviço</h2><textarea id="prestadores" maxlength="1000"></textarea><div class="counter" id="c1">0 / 1000</div></div>
+<div class="card"><h2>⚠️ Ocorrências</h2><textarea id="ocorrencias" maxlength="1000"></textarea><div class="counter" id="c2">0 / 1000</div></div>
+<div class="card"><h2>📝 Observações</h2><textarea id="observacoes" maxlength="1000"></textarea><div class="counter" id="c3">0 / 1000</div></div>
+<div class="actions"><button class="btn-whatsapp" onclick="enviarWhats()">📱 Enviar Plantão pelo WhatsApp</button><button class="btn-danger" onclick="limparPlantao()">🗑️ Limpar Plantão</button></div>
+</main><script src="../js/dados_moradores.js"></script><script src="../js/sistema.js"></script><script src="../js/plantao.js"></script></body></html>

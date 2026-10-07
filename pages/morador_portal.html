@@ -1,0 +1,10 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portal do Morador - Laguna Hall</title><link rel="stylesheet" href="../css/estilo.css"></head>
+<body><header><div class="head"><div><div class="brand">🏢 Edifício Laguna Hall</div><div class="sub">Portal do Morador</div></div><div><b id="moradorTopo"></b></div></div></header><main>
+<nav class="menu"><a class="btn" href="./morador_portal.html">🏠 Início</a><a class="btn btn-secondary" href="./chat.html">💬 Chat</a><a class="btn btn-secondary" href="./reservas.html">📅 Reservas</a><button class="btn-danger" onclick="sair()">Sair</button></nav>
+<div class="profile"><h2 id="boasVindas"></h2><span>Apartamento <b id="apt"></b></span></div>
+<div class="grid3"><div class="stat"><strong id="nEntregas">0</strong>Entregas pendentes</div><div class="stat"><strong id="nNotif">0</strong>Notificações</div><div class="stat"><strong id="nReservas">0</strong>Reservas</div></div>
+<div class="card"><h2>🔔 Central de Notificações</h2><div id="notificacoes"></div><div class="actions"><button class="btn-light" onclick="marcarTodas()">✓ Marcar todas como lidas</button><button class="btn-danger" onclick="limparMinhasNotificacoes()">🗑️ Limpar</button></div></div>
+<div class="card"><h2>📦 Minhas Entregas</h2><div id="entregas"></div></div>
+<div class="card"><h2>📅 Reservas</h2><p class="muted">Consulte a disponibilidade e solicite o Salão de Festas ou a Churrasqueira.</p><a class="btn" href="./reservas.html">Abrir Reservas</a></div>
+<div class="card"><h2>💬 Falar com a Portaria</h2><p>Envie uma mensagem diretamente para o operador da portaria.</p><a class="btn" href="./chat.html">Abrir Chat</a></div>
+</main><script src="../js/dados_moradores.js"></script><script src="../js/sistema.js"></script><script src="../js/morador.js"></script></body></html>
