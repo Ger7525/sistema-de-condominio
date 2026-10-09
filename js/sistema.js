@@ -69,7 +69,11 @@ function setSessao(dados) {
 
 function sair() {
     localStorage.removeItem(STORAGE.sessao);
-    window.location.href = "../index.html";
+    const caminho = window.location.pathname;
+    const base = caminho.includes("/pages/")
+        ? caminho.substring(0, caminho.indexOf("/pages/"))
+        : caminho.substring(0, caminho.lastIndexOf("/"));
+    window.location.href = `${base}/index.html`;
 }
 
 /* =========================================================

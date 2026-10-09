@@ -1,0 +1,9 @@
+const sessaoAdmin = getSessao();
+if (!sessaoAdmin || sessaoAdmin.tipo !== "administradora") location.href = "../../index.html";
+function renderizarReservasAdmin(){
+ const lista=ler(STORAGE.reservas,[]).sort((a,b)=>b.id-a.id),el=document.getElementById("listaReservas");
+ if(!lista.length){el.innerHTML='<div class="empty">Nenhuma reserva registrada.</div>';return;}
+ el.innerHTML=`<table><thead><tr><th>Apto</th><th>Morador</th><th>Espaço</th><th>Data</th><th>Horário</th><th>Status</th><th>Ações</th></tr></thead><tbody>${lista.map(r=>`<tr><td>${escapar(r.apt)}</td><td>${escapar(r.morador)}</td><td>${escapar(r.espaco)}</td><td>${escapar(r.data)}</td><td>${escapar(r.horario)}</td><td><span class="badge ${r.status==='Aprovada'?'success':r.status==='Solicitada'?'warning':'danger'}">${escapar(r.status)}</span></td><td>${r.status==='Solicitada'?`<button class="btn-success" onclick="decidir(${r.id},'Aprovada')">Aprovar</button> <button class="btn-danger" onclick="decidir(${r.id},'Recusada')">Recusar</button>`:'—'}</td></tr>`).join('')}</tbody></table>`;
+}
+function decidir(id,status){const lista=ler(STORAGE.reservas,[]),r=lista.find(x=>x.id===id);if(!r)return;if(status==='Aprovada'&&lista.some(x=>x.id!==id&&x.espaco===r.espaco&&x.data===r.data&&x.status==='Aprovada'))return alert('Já existe uma reserva aprovada para este espaço e data.');r.status=status;r.atualizadaEm=agoraISO();salvar(STORAGE.reservas,lista);notificar(r.apt,r.morador,status==='Aprovada'?'📅 Reserva aprovada':'❌ Reserva recusada',status==='Aprovada'?`Sua reserva do ${r.espaco}, em ${r.data}, das ${r.horario}, foi aprovada pela Administradora.`:`Sua solicitação para ${r.espaco}, em ${r.data}, não foi aprovada pela Administradora.`,'reserva');renderizarReservasAdmin();}
+renderizarReservasAdmin();setInterval(renderizarReservasAdmin,3000);

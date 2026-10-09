@@ -1,29 +1,16 @@
-EDIFÍCIO LAGUNA HALL - SISTEMA DE CONDOMÍNIO
-================================================
+EDIFÍCIO LAGUNA HALL — VERSÃO FRONTEND V2
 
-ESTRUTURA
-index.html
-pages/
-  portaria_plantao.html
-  portaria_entregas.html
-  morador_portal.html
-  reservas.html
-  chat.html
-css/estilo.css
-js/
-  dados_moradores.js
-  sistema.js
-  plantao.js
-  entregas.js
-  morador.js
-  reservas.js
-  chat.js
+ACESSOS
+- Portaria: senha pela primeira letra do nome repetida 3 vezes.
+- Morador: primeiro nome do morador selecionado.
+- Administradora: 1234.
+- Síndico: 1234.
 
-COMO USAR
-1. Extraia o ZIP mantendo a estrutura de pastas.
-2. Abra index.html no navegador.
-3. Escolha Portaria ou Morador.
-4. Os dados desta primeira versão ficam salvos no localStorage do navegador.
+NOVOS MÓDULOS
+- Administradora: aprovação de reservas e cadastro de boletos PDF por apartamento.
+- Síndico: painel geral, histórico de plantões enviados pelo sistema, entregas e ocorrências.
+- Plantão: ao enviar pelo WhatsApp, uma cópia estruturada também é registrada no histórico do Síndico.
+- Morador: visualização dos boletos disponibilizados para seu apartamento.
 
-IMPORTANTE
-A versão local permite testar todo o fluxo no mesmo navegador. Para sincronização real entre computador da portaria e celulares dos moradores, chat em tempo real e notificações entre dispositivos, será necessário conectar um banco de dados/backend (por exemplo Firebase). A estrutura JavaScript foi separada para facilitar essa evolução.
+OBSERVAÇÃO
+Esta versão ainda é frontend e usa localStorage/IndexedDB. Para sincronização real entre computadores e celulares, chat em tempo real, PDFs compartilhados e agentes de IA, a próxima etapa recomendada é um backend com banco de dados e armazenamento de arquivos.

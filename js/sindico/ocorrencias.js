@@ -1,0 +1,3 @@
+const sessaoSindico=getSessao();if(!sessaoSindico||sessaoSindico.tipo!=="sindico")location.href="../../index.html";
+function renderOcorrencias(){const p=ler(STORAGE.plantao,{}),el=document.getElementById('listaOcorrencias');if(!p.ocorrencias||!p.ocorrencias.trim()){el.innerHTML='<div class="empty">Nenhuma ocorrência registrada no último plantão.</div>';return;}el.innerHTML=`<div class="timeline"><div class="timeline-item alert-card"><b>Data:</b> ${escapar(p.data||'-')}<br><b>Operador:</b> ${escapar(p.operador||'-')}<hr>${escapar(p.ocorrencias)}</div></div>`;}
+renderOcorrencias();setInterval(renderOcorrencias,3000);

@@ -140,6 +140,24 @@ ${dados.observacoes || "Nenhuma observação registrada."}
 *Relatório gerado pelo Sistema Operacional do Edifício Laguna Hall.*`;
 }
 
+function registrarPlantaoNoSistema(relatorio) {
+    const historico = ler("laguna_historico_plantoes", []);
+    const dados = ler(STORAGE.plantao, {});
+    historico.push({
+        id: Date.now(),
+        operador: dados.operador || sessaoPlantao.operador,
+        data: dados.data || dataBR(),
+        saindo: dados.saindo || "",
+        assumindo: dados.assumindo || "",
+        prestadores: dados.prestadores || "",
+        ocorrencias: dados.ocorrencias || "",
+        observacoes: dados.observacoes || "",
+        relatorio,
+        enviadoWhatsAppEm: agoraISO()
+    });
+    salvar("laguna_historico_plantoes", historico);
+}
+
 function enviarWhats() {
     salvarPlantao();
 
@@ -150,6 +168,7 @@ function enviarWhats() {
     if (!numero) return;
 
     const relatorio = montarRelatorioPlantao();
+    registrarPlantaoNoSistema(relatorio);
     whatsapp(numero, relatorio);
 }
 
