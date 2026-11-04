@@ -1,192 +1,331 @@
-/* =========================================================
-   PÁGINA — PASSAGEM DE PLANTÃO
-   ========================================================= */
+(function () {
+   "use strict";
 
-const sessaoPlantao = getSessao();
+   /* Sem operador logado, volta para o login */
+   const operador = Armazenamento.ler("operador");
+   if (!operador) { window.location.replace("../index.html"); return; }
 
-if (!sessaoPlantao || sessaoPlantao.tipo !== "portaria") {
-    window.location.href = "../index.html";
-}
+   const $ = function (id) { return document.getElementById(id); };
+   document.querySelector(".cabecalho h1").textContent = DADOS.condominio;
 
-const camposPlantao = [
-    "saindo",
-    "assumindo",
-    "prestadores",
-    "ocorrencias",
-    "observacoes"
-];
+   const TIPO_AVISO = "Aviso do condomínio";
 
-const campoSaindo = document.getElementById("saindo");
-const campoAssumindo = document.getElementById("assumindo");
+   /* Como cada seção aparece na lista.
+      "morador: true" = seção com apto, nome e botão de WhatsApp. */
+   function detalhesMorador(r) {
+      const d = ["Morador: " + r.nome + (r.avulso ? " (não cadastrado)" : "")];
+      d.push(r.tipo === TIPO_AVISO ? "Tipo: " + r.tipo : "Tipo: " + r.tipo + " · Qtd: " + (r.qtd || 1));
+      if (r.descricao) d.push(r.descricao);
+      return d;
+   }
+   function tituloMorador(r) { return "Apto " + r.apto; }
 
-function inicializarPlantao() {
-    document.getElementById("op").textContent = sessaoPlantao.operador;
-    document.getElementById("operadorTopo").textContent = sessaoPlantao.operador;
-    document.getElementById("data").textContent = dataBR();
+   const SECOES = {
+      entregas:        { morador: true, titulo: tituloMorador, detalhes: detalhesMorador },
+      correspondencias:{ morador: true, titulo: tituloMorador, detalhes: detalhesMorador },
+      /* Sem "morador: true" = sem botão de WhatsApp */
+      recolhimentos:   { titulo: tituloMorador, detalhes: detalhesMorador },
+      ocorrencias: {
+         titulo: function (r) { return r.tipo; },
+         detalhes: function (r) { return [r.descricao]; }
+      },
+      observacoes: {
+         titulo: function (r) { return r.titulo; },
+         detalhes: function (r) { return [r.descricao]; }
+      },
+      prestadores: {
+         titulo: function (r) { return r.empresa; },
+         detalhes: function (r) { return ["Prestador: " + r.nome, "Serviço: " + r.servico]; }
+      },
+      avisos: {
+         titulo: function (r) { return r.assunto; },
+         detalhes: function (r) { return ["Para: " + r.destino, r.descricao]; }
+      }
+   };
 
-    PORTEIROS_LAGUNA.forEach((nome) => {
-        campoSaindo.insertAdjacentHTML(
-            "beforeend",
-            `<option value="${escapar(nome)}">${escapar(nome)}</option>`
-        );
+   /* ---------- Estado salvo ---------- */
+   function dataHoje() {
+      const d = new Date();
+      const dois = function (n) { return String(n).padStart(2, "0"); };
+      return d.getFullYear() + "-" + dois(d.getMonth() + 1) + "-" + dois(d.getDate());
+   }
+   function horaAgora() {
+      return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+   }
+   function plantaoVazio() {
+      const p = { data: dataHoje(), saindo: "", entrando: "" };
+      Object.keys(SECOES).forEach(function (s) { p[s] = []; });
+      return p;
+   }
 
-        campoAssumindo.insertAdjacentHTML(
-            "beforeend",
-            `<option value="${escapar(nome)}">${escapar(nome)}</option>`
-        );
-    });
+   let plantao = Object.assign(plantaoVazio(), Armazenamento.ler("plantao") || {});
+   function salvar() { Armazenamento.salvar("plantao", plantao); }
 
-    const dadosSalvos = ler(STORAGE.plantao, {});
+   /* ---------- Avisos na tela ---------- */
+   let temporizador;
+   function avisar(texto) {
+      const el = $("aviso");
+      el.textContent = texto;
+      el.hidden = false;
+      clearTimeout(temporizador);
+      temporizador = setTimeout(function () { el.hidden = true; }, 3000);
+   }
 
-    camposPlantao.forEach((id) => {
-        const campo = document.getElementById(id);
-        campo.value = dadosSalvos[id] || "";
-        campo.addEventListener("input", salvarPlantao);
-        campo.addEventListener("change", salvarPlantao);
-    });
+   /* ---------- Preenchimento dos selects ---------- */
+   function preencher(select, itens, valorDe, textoDe) {
+      itens.forEach(function (item) {
+         const op = document.createElement("option");
+         op.value = valorDe(item);
+         op.textContent = textoDe(item);
+         select.appendChild(op);
+      });
+   }
 
-    atualizarContadores();
-    renderizarPendentes();
-}
+   function iniciarSelects() {
+      const porteiro = function (p) { return p.valor; };
+      const nome = function (p) { return p.nome; };
+      preencher($("porteiro-saindo"), DADOS.porteiros, porteiro, nome);
+      preencher($("porteiro-entrando"), DADOS.porteiros, porteiro, nome);
 
-function salvarPlantao() {
-    const dados = ler(STORAGE.plantao, {});
+      const igual = function (x) { return x; };
+      const aptos = (DADOS.apartamentos && DADOS.apartamentos.length)
+         ? DADOS.apartamentos
+         : Array.from(new Set(DADOS.moradores.map(function (m) { return m.apto; })))
+              .sort(function (a, b) { return a.localeCompare(b, "pt-BR", { numeric: true }); });
+      document.querySelectorAll('select[name="apto"]').forEach(function (s) { preencher(s, aptos, igual, igual); });
+      document.querySelectorAll("select[data-tipos]").forEach(function (s) {
+         preencher(s, DADOS[s.dataset.tipos] || [], igual, igual);
+      });
+   }
 
-    dados.operador = sessaoPlantao.operador;
-    dados.data = dataBR();
+   /* Sugestões de nome conforme o apto (um conjunto por formulário) */
+   function iniciarMoradores(form) {
+      const lista = form.querySelector("datalist");
+      if (!lista) return;
+      const apto = form.elements.apto;
+      const nome = form.elements.nome;
 
-    camposPlantao.forEach((id) => {
-        dados[id] = document.getElementById(id).value;
-    });
+      function atualizar() {
+         lista.replaceChildren();
+         const encontrados = DADOS.moradores.filter(function (m) {
+            return !apto.value || m.apto === apto.value;
+         });
+         encontrados.forEach(function (m) {
+            const op = document.createElement("option");
+            op.value = m.nome;
+            lista.appendChild(op);
+         });
+         if (apto.value && encontrados.length === 1) {
+            nome.value = encontrados[0].nome;
+         }
+      }
+      apto.addEventListener("change", atualizar);
+      form.addEventListener("reset", function () { setTimeout(atualizar, 0); });
+   }
 
-    salvar(STORAGE.plantao, dados);
-    atualizarContadores();
-}
+   /* ---------- Desenho das listas ---------- */
+   function botao(texto, classe, aoClicar) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn btn--mini " + classe;
+      b.textContent = texto;
+      b.addEventListener("click", aoClicar);
+      return b;
+   }
 
-function atualizarContadores() {
-    ["prestadores", "ocorrencias", "observacoes"].forEach((id, indice) => {
-        const campo = document.getElementById(id);
-        const contador = document.getElementById(`c${indice + 1}`);
+   function desenhar(secao) {
+      const cfg = SECOES[secao];
+      const ul = $("lista-" + secao);
+      ul.replaceChildren();
 
-        contador.textContent = `${campo.value.length} / 1000`;
-    });
-}
+      plantao[secao].slice().reverse().forEach(function (r) {
+         const li = document.createElement("li");
+         li.className = "registro";
 
-function renderizarPendentes() {
-    const entregas = ler(STORAGE.entregas, [])
-        .filter((entrega) => entrega.status === "Pendente");
+         const corpo = document.createElement("div");
+         corpo.className = "registro__corpo";
 
-    const area = document.getElementById("pendentes");
+         const topo = document.createElement("strong");
+         topo.textContent = cfg.titulo(r);
+         const hora = document.createElement("span");
+         hora.className = "registro__hora";
+         hora.textContent = r.hora;
+         topo.appendChild(hora);
+         corpo.appendChild(topo);
 
-    if (!entregas.length) {
-        area.innerHTML = '<div class="empty">Nenhuma entrega pendente.</div>';
-        return;
-    }
+         cfg.detalhes(r).forEach(function (linha) {
+            const p = document.createElement("p");
+            p.textContent = linha;
+            corpo.appendChild(p);
+         });
 
-    area.innerHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Apartamento</th>
-                    <th>Morador</th>
-                    <th>Entrega</th>
-                    <th>Data/Hora</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${entregas.map((entrega) => `
-                    <tr>
-                        <td>${escapar(entrega.apt)}</td>
-                        <td>${escapar(entrega.morador)}</td>
-                        <td>${escapar(entrega.descricao)}</td>
-                        <td>${escapar(entrega.data)} ${escapar(entrega.hora)}</td>
-                    </tr>
-                `).join("")}
-            </tbody>
-        </table>
-    `;
-}
+         const acoes = document.createElement("div");
+         acoes.className = "registro__acoes";
+         if (cfg.morador) {
+            acoes.appendChild(botao("WhatsApp", "btn--sucesso", function () { enviar(secao, r); }));
+         }
+         acoes.appendChild(botao("Remover", "btn--perigo", function () { remover(secao, r.id); }));
 
-function montarRelatorioPlantao() {
-    const dados = ler(STORAGE.plantao, {});
+         li.append(corpo, acoes);
+         ul.appendChild(li);
+      });
 
-    const entregas = ler(STORAGE.entregas, [])
-        .filter((entrega) => entrega.status === "Pendente")
-        .map((entrega) =>
-            `• Apto ${entrega.apt} — ${entrega.morador} — ${entrega.descricao} — ${entrega.data} ${entrega.hora}`
-        )
-        .join("\n") || "• Nenhuma entrega pendente";
+      $("contador-" + secao).textContent = plantao[secao].length;
+   }
 
-    return `*EDIFÍCIO LAGUNA HALL*
-*RELATÓRIO DE PASSAGEM DE PLANTÃO*
+   function desenharTudo() { Object.keys(SECOES).forEach(desenhar); }
 
-*Data:* ${dados.data || dataBR()}
-*Operador responsável:* ${dados.operador || sessaoPlantao.operador}
-*Porteiro saindo:* ${dados.saindo || "Não informado"}
-*Porteiro assumindo:* ${dados.assumindo || "Não informado"}
+   function remover(secao, id) {
+      plantao[secao] = plantao[secao].filter(function (r) { return r.id !== id; });
+      salvar();
+      desenhar(secao);
+   }
 
-*ENTREGAS PENDENTES*
-${entregas}
+   /* ---------- WhatsApp ---------- */
+   function enviar(secao, registro) {
+      const texto = secao === "correspondencias"
+         ? Whats.mensagemCorrespondencia(registro, operador)
+         : Whats.mensagemEntrega(registro, operador);
+      Whats.abrir(registro.telefone, texto);
+   }
 
-*PRESTADORES DE SERVIÇO*
-${dados.prestadores || "Nenhum registro."}
+   /* ---------- Formulários de registro ---------- */
+   let enviarApos = false;
 
-*OCORRÊNCIAS*
-${dados.ocorrencias || "Nenhuma ocorrência registrada."}
+   function normalizarTelefone(valor) {
+      const numeros = String(valor || "").replace(/\D/g, "");
+      return (numeros.length === 10 || numeros.length === 11) ? "55" + numeros : numeros;
+   }
 
-*OBSERVAÇÕES*
-${dados.observacoes || "Nenhuma observação registrada."}
+   function coletar(secao, form) {
+      const dados = Object.fromEntries(new FormData(form));
+      Object.keys(dados).forEach(function (k) { dados[k] = String(dados[k]).trim(); });
+      if (SECOES[secao].morador) {
+         const m = DADOS.moradores.find(function (x) {
+            return x.apto === dados.apto &&
+                   x.nome.toLowerCase() === dados.nome.toLowerCase();
+         });
+         if (form.classList.contains("formulario-avulso")) {
+            dados.avulso = true;
+            dados.telefone = normalizarTelefone(dados.telefone);
+         } else {
+            dados.telefone = m ? m.telefone : "";
+         }
+         dados.data = dataHoje();
+         dados.porteiro = operador.nome;
+      }
+      return Object.assign({ id: Date.now() + Math.random(), hora: horaAgora() }, dados);
+   }
 
-*Relatório gerado pelo Sistema Operacional do Edifício Laguna Hall.*`;
-}
+   document.querySelectorAll("form[data-secao]").forEach(function (form) {
+      const secao = form.dataset.secao;
+      iniciarMoradores(form);
 
-function registrarPlantaoNoSistema(relatorio) {
-    const historico = ler("laguna_historico_plantoes", []);
-    const dados = ler(STORAGE.plantao, {});
-    historico.push({
-        id: Date.now(),
-        operador: dados.operador || sessaoPlantao.operador,
-        data: dados.data || dataBR(),
-        saindo: dados.saindo || "",
-        assumindo: dados.assumindo || "",
-        prestadores: dados.prestadores || "",
-        ocorrencias: dados.ocorrencias || "",
-        observacoes: dados.observacoes || "",
-        relatorio,
-        enviadoWhatsAppEm: agoraISO()
-    });
-    salvar("laguna_historico_plantoes", historico);
-}
+      form.addEventListener("submit", function (ev) {
+         ev.preventDefault();
+         const registro = coletar(secao, form);
 
-function enviarWhats() {
-    salvarPlantao();
+         if (secao === "correspondencias" && registro.tipo === TIPO_AVISO && !registro.descricao) {
+            avisar("Escreva o texto do aviso no campo de descrição.");
+            form.elements.descricao.focus();
+            enviarApos = false;
+            return;
+         }
 
-    const numero = prompt(
-        "Informe o número do WhatsApp que receberá o relatório.\n\nExemplo: 81999999999"
-    );
+         plantao[secao].push(registro);
+         salvar();
+         desenhar(secao);
+         form.reset();
+         if (form.classList.contains("formulario-avulso")) fecharAvulso(form);
+         avisar("Registro adicionado.");
+         if (enviarApos && SECOES[secao].morador) enviar(secao, registro);
+         enviarApos = false;
+      });
+   });
 
-    if (!numero) return;
+   document.querySelectorAll("[data-enviar]").forEach(function (botaoEnviar) {
+      botaoEnviar.addEventListener("click", function () {
+         const form = botaoEnviar.closest("form");
+         const tel = form.elements.telefone;
+         if (tel && normalizarTelefone(tel.value).length < 12) {
+            avisar("Informe o telefone com DDD para enviar pelo WhatsApp.");
+            tel.focus();
+            return;
+         }
+         enviarApos = true;
+         if (form.checkValidity()) { form.requestSubmit(); }
+         else { enviarApos = false; form.reportValidity(); }
+      });
+   });
 
-    const relatorio = montarRelatorioPlantao();
-    registrarPlantaoNoSistema(relatorio);
-    whatsapp(numero, relatorio);
-}
+   /* Morador não cadastrado: o formulário só aparece ao clicar no botão */
+   function botaoDe(form) { return document.querySelector('[aria-controls="' + form.id + '"]'); }
 
-function limparPlantao() {
-    if (!confirm("Deseja realmente limpar todos os dados do plantão salvo?")) {
-        return;
-    }
+   function abrirAvulso(form) {
+      form.hidden = false;
+      botaoDe(form).setAttribute("aria-expanded", "true");
+      form.elements.apto.focus();
+   }
+   function fecharAvulso(form) {
+      form.reset();
+      form.hidden = true;
+      botaoDe(form).setAttribute("aria-expanded", "false");
+   }
 
-    limpar(STORAGE.plantao);
+   document.querySelectorAll("[data-abrir]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+         const form = $(btn.dataset.abrir);
+         if (form.hidden) abrirAvulso(form); else fecharAvulso(form);
+      });
+   });
+   document.querySelectorAll("[data-fechar]").forEach(function (btn) {
+      btn.addEventListener("click", function () { fecharAvulso($(btn.dataset.fechar)); });
+   });
 
-    camposPlantao.forEach((id) => {
-        document.getElementById(id).value = "";
-    });
+   /* ---------- Dados da troca de plantão ---------- */
+   function iniciarTroca() {
+      $("data-plantao").value = plantao.data;
+      $("porteiro-saindo").value = plantao.saindo;
+      $("porteiro-entrando").value = plantao.entrando;
+   }
 
-    atualizarContadores();
-}
+   $("data-plantao").addEventListener("change", function (e) { plantao.data = e.target.value; salvar(); });
+   $("porteiro-saindo").addEventListener("change", function (e) { plantao.saindo = e.target.value; salvar(); });
+   $("porteiro-entrando").addEventListener("change", function (e) { plantao.entrando = e.target.value; salvar(); });
 
-inicializarPlantao();
+   /* ---------- Barra de ações ---------- */
+   $("btn-enviar-plantao").addEventListener("click", function () {
+      if (!plantao.saindo || !plantao.entrando) {
+         avisar("Informe o porteiro saindo e o entrando antes de enviar.");
+         $(plantao.saindo ? "porteiro-entrando" : "porteiro-saindo").focus();
+         return;
+      }
+      if (plantao.saindo === plantao.entrando) {
+         avisar("O porteiro saindo e o entrando não podem ser a mesma pessoa.");
+         return;
+      }
+      Whats.abrir(DADOS.whatsappRelatorio, Whats.mensagemPlantao(plantao, operador));
+   });
 
-/* Atualiza as entregas pendentes sem apagar os dados digitados. */
-setInterval(renderizarPendentes, 3000);
+   $("btn-limpar").addEventListener("click", function () {
+      if (!window.confirm("Apagar todos os registros deste plantão? Essa ação não pode ser desfeita.")) return;
+      plantao = plantaoVazio();
+      Armazenamento.remover("plantao");
+      document.querySelectorAll("form[data-secao]").forEach(function (f) { f.reset(); });
+      document.querySelectorAll(".formulario-avulso").forEach(fecharAvulso);
+      iniciarTroca();
+      desenharTudo();
+      avisar("Plantão limpo.");
+   });
+
+   $("btn-sair").addEventListener("click", function () {
+      Armazenamento.remover("operador");
+      window.location.href = "../index.html";
+   });
+
+   /* ---------- Início ---------- */
+   $("operador-nome").textContent = operador.nome;
+   iniciarSelects();
+   iniciarTroca();
+   desenharTudo();
+})();

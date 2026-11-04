@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Plantão | Edifício Laguna Hall</title>
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="pagina-plantao">
+   <header class="cabecalho">
+      <img class="logo" src="../img/morada_sul-removebg-preview.png" alt="Logo do Edifício Laguna Hall">
+      <h1>Edifício Laguna Hall</h1>
+   </header>
+
+   <main class="conteiner">
+
+      <!-- Operador em destaque -->
+      <section class="operador" aria-label="Operador do plantão">
+         <div>
+            <span class="operador__rotulo">Operador</span>
+            <strong id="operador-nome" class="operador__nome">—</strong>
+         </div>
+         <button type="button" id="btn-sair" class="btn btn--secundario">Sair</button>
+      </section>
+
+      <!-- Dados do plantão -->
+      <section class="cartao" aria-labelledby="titulo-troca">
+         <h2 id="titulo-troca">Troca de plantão</h2>
+         <div class="campos">
+            <div class="campo">
+               <label for="data-plantao">Data</label>
+               <input type="date" id="data-plantao">
+            </div>
+            <div class="campo">
+               <label for="porteiro-saindo">Porteiro saindo</label>
+               <select id="porteiro-saindo"><option value="">Selecionar o porteiro</option></select>
+            </div>
+            <div class="campo">
+               <label for="porteiro-entrando">Porteiro entrando</label>
+               <select id="porteiro-entrando"><option value="">Selecionar o porteiro</option></select>
+            </div>
+         </div>
+      </section>
+
+      <div class="grade">
+
+         <!-- Entregas -->
+         <section class="cartao cartao--largo" aria-labelledby="titulo-entregas">
+            <h2 id="titulo-entregas">Entregas <span class="contador" id="contador-entregas">0</span></h2>
+            <form id="form-entregas" data-secao="entregas">
+               <div class="campos">
+                  <div class="campo">
+                     <label for="entrega-apto">Apto</label>
+                     <select id="entrega-apto" name="apto" required><option value="">Apto</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="entrega-nome">Nome do morador</label>
+                     <input type="text" id="entrega-nome" name="nome" list="lista-moradores" placeholder="Nome" autocomplete="off" required>
+                     <datalist id="lista-moradores"></datalist>
+                  </div>
+                  <div class="campo">
+                     <label for="entrega-tipo">Tipo de entrega</label>
+                     <select id="entrega-tipo" name="tipo" data-tipos="tiposEntrega" required><option value="">Tipo</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="entrega-qtd">Quantidade</label>
+                     <input type="number" id="entrega-qtd" name="qtd" value="1" min="1" max="99" required>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="entrega-descricao">Descrição (opcional)</label>
+                     <textarea id="entrega-descricao" name="descricao" maxlength="100" rows="2" placeholder="Ex.: caixa média, remetente..."></textarea>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar entrega</button>
+                  <button type="button" id="btn-registrar-enviar" class="btn btn--sucesso" data-enviar>Registrar e enviar via WhatsApp</button>
+                  <button type="button" id="btn-avulso" class="btn btn--secundario" aria-expanded="false" aria-controls="form-avulso" data-abrir="form-avulso">Morador não cadastrado</button>
+               </div>
+            </form>
+
+            <!-- Morador não cadastrado (aparece ao clicar no botão) -->
+            <form id="form-avulso" class="formulario-avulso" data-secao="entregas" hidden>
+               <h3>Entrega para morador não cadastrado</h3>
+               <div class="campos">
+                  <div class="campo">
+                     <label for="avulso-apto">Apto</label>
+                     <input type="text" id="avulso-apto" name="apto" maxlength="10" placeholder="Ex.: 205" required>
+                  </div>
+                  <div class="campo">
+                     <label for="avulso-nome">Nome do morador</label>
+                     <input type="text" id="avulso-nome" name="nome" maxlength="80" placeholder="Nome completo" autocomplete="off" required>
+                  </div>
+                  <div class="campo">
+                     <label for="avulso-telefone">Telefone (com DDD)</label>
+                     <input type="tel" id="avulso-telefone" name="telefone" inputmode="tel" maxlength="20" placeholder="(81) 99999-9999">
+                  </div>
+                  <div class="campo">
+                     <label for="avulso-tipo">Tipo de entrega</label>
+                     <select id="avulso-tipo" name="tipo" data-tipos="tiposEntrega" required><option value="">Tipo</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="avulso-qtd">Quantidade</label>
+                     <input type="number" id="avulso-qtd" name="qtd" value="1" min="1" max="99" required>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="avulso-descricao">Descrição (opcional)</label>
+                     <textarea id="avulso-descricao" name="descricao" maxlength="100" rows="2" placeholder="Ex.: caixa média, remetente..."></textarea>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar entrega</button>
+                  <button type="button" class="btn btn--sucesso" data-enviar>Registrar e enviar via WhatsApp</button>
+                  <button type="button" id="btn-avulso-cancelar" class="btn btn--secundario" data-fechar="form-avulso">Cancelar</button>
+               </div>
+            </form>
+            <ul id="lista-entregas" class="registros" aria-live="polite"></ul>
+         </section>
+
+         <!-- Correspondências e avisos -->
+         <section class="cartao cartao--largo" aria-labelledby="titulo-correspondencias">
+            <h2 id="titulo-correspondencias">Correspondências e avisos <span class="contador" id="contador-correspondencias">0</span></h2>
+            <form id="form-correspondencias" data-secao="correspondencias">
+               <div class="campos">
+                  <div class="campo">
+                     <label for="corresp-apto">Apto</label>
+                     <select id="corresp-apto" name="apto" required><option value="">Apto</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-nome">Nome do morador</label>
+                     <input type="text" id="corresp-nome" name="nome" list="lista-moradores-corresp" placeholder="Nome" autocomplete="off" required>
+                     <datalist id="lista-moradores-corresp"></datalist>
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-tipo">Tipo</label>
+                     <select id="corresp-tipo" name="tipo" data-tipos="tiposCorrespondencia" required><option value="">Tipo</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-qtd">Quantidade</label>
+                     <input type="number" id="corresp-qtd" name="qtd" value="1" min="1" max="99" required>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="corresp-descricao">Descrição / texto do aviso</label>
+                     <textarea id="corresp-descricao" name="descricao" maxlength="300" rows="2" placeholder="Ex.: vencimento, referência ou o texto do aviso"></textarea>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar</button>
+                  <button type="button" id="btn-corresp-enviar" class="btn btn--sucesso" data-enviar>Registrar e enviar via WhatsApp</button>
+                  <button type="button" id="btn-corresp-avulso" class="btn btn--secundario" aria-expanded="false" aria-controls="form-corresp-avulso" data-abrir="form-corresp-avulso">Morador não cadastrado</button>
+               </div>
+            </form>
+
+            <!-- Morador não cadastrado (aparece ao clicar no botão) -->
+            <form id="form-corresp-avulso" class="formulario-avulso" data-secao="correspondencias" hidden>
+               <h3>Morador não cadastrado</h3>
+               <div class="campos">
+                  <div class="campo">
+                     <label for="corresp-avulso-apto">Apto</label>
+                     <input type="text" id="corresp-avulso-apto" name="apto" maxlength="10" placeholder="Ex.: 205" required>
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-avulso-nome">Nome do morador</label>
+                     <input type="text" id="corresp-avulso-nome" name="nome" maxlength="80" placeholder="Nome completo" autocomplete="off" required>
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-avulso-telefone">Telefone (com DDD)</label>
+                     <input type="tel" id="corresp-avulso-telefone" name="telefone" inputmode="tel" maxlength="20" placeholder="(81) 99999-9999">
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-avulso-tipo">Tipo</label>
+                     <select id="corresp-avulso-tipo" name="tipo" data-tipos="tiposCorrespondencia" required><option value="">Tipo</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="corresp-avulso-qtd">Quantidade</label>
+                     <input type="number" id="corresp-avulso-qtd" name="qtd" value="1" min="1" max="99" required>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="corresp-avulso-descricao">Descrição / texto do aviso</label>
+                     <textarea id="corresp-avulso-descricao" name="descricao" maxlength="300" rows="2" placeholder="Ex.: vencimento, referência ou o texto do aviso"></textarea>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar</button>
+                  <button type="button" class="btn btn--sucesso" data-enviar>Registrar e enviar via WhatsApp</button>
+                  <button type="button" id="btn-corresp-avulso-cancelar" class="btn btn--secundario" data-fechar="form-corresp-avulso">Cancelar</button>
+               </div>
+            </form>
+            <ul id="lista-correspondencias" class="registros" aria-live="polite"></ul>
+         </section>
+
+         <!-- Entregas e encomendas a recolher -->
+         <section class="cartao cartao--largo" aria-labelledby="titulo-recolhimentos">
+            <h2 id="titulo-recolhimentos">Entregas e encomendas a recolher <span class="contador" id="contador-recolhimentos">0</span></h2>
+            <form id="form-recolhimentos" data-secao="recolhimentos">
+               <div class="campos">
+                  <div class="campo">
+                     <label for="recolher-apto">Apto</label>
+                     <select id="recolher-apto" name="apto" required><option value="">Apto</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="recolher-nome">Nome do morador</label>
+                     <input type="text" id="recolher-nome" name="nome" list="lista-moradores-recolher" placeholder="Nome" autocomplete="off" required>
+                     <datalist id="lista-moradores-recolher"></datalist>
+                  </div>
+                  <div class="campo">
+                     <label for="recolher-tipo">Tipo</label>
+                     <select id="recolher-tipo" name="tipo" data-tipos="tiposEntrega" required><option value="">Tipo</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="recolher-qtd">Quantidade</label>
+                     <input type="number" id="recolher-qtd" name="qtd" value="1" min="1" max="99" required>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="recolher-descricao">Descrição (opcional)</label>
+                     <textarea id="recolher-descricao" name="descricao" maxlength="100" rows="2" placeholder="Ex.: quem vai recolher, transportadora..."></textarea>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar</button>
+               </div>
+            </form>
+
+            <ul id="lista-recolhimentos" class="registros" aria-live="polite"></ul>
+         </section>
+
+         <!-- Ocorrências -->
+         <section class="cartao" aria-labelledby="titulo-ocorrencias">
+            <h2 id="titulo-ocorrencias">Ocorrências <span class="contador" id="contador-ocorrencias">0</span></h2>
+            <form id="form-ocorrencias" data-secao="ocorrencias">
+               <div class="campo">
+                  <label for="ocorrencia-tipo">Tipo de ocorrência</label>
+                  <input type="text" id="ocorrencia-tipo" name="tipo" placeholder="Ex.: barulho, portão, vazamento" required>
+               </div>
+               <div class="campo">
+                  <label for="ocorrencia-descricao">Descrição</label>
+                  <textarea id="ocorrencia-descricao" name="descricao" maxlength="1000" rows="3" placeholder="Descreva a ocorrência" required></textarea>
+               </div>
+               <button type="submit" class="btn btn--principal">Registrar ocorrência</button>
+            </form>
+            <ul id="lista-ocorrencias" class="registros" aria-live="polite"></ul>
+         </section>
+
+         <!-- Observações -->
+         <section class="cartao" aria-labelledby="titulo-observacoes">
+            <h2 id="titulo-observacoes">Observações <span class="contador" id="contador-observacoes">0</span></h2>
+            <form id="form-observacoes" data-secao="observacoes">
+               <div class="campo">
+                  <label for="observacao-titulo">Assunto</label>
+                  <input type="text" id="observacao-titulo" name="titulo" placeholder="Assunto" required>
+               </div>
+               <div class="campo">
+                  <label for="observacao-descricao">Descrição</label>
+                  <textarea id="observacao-descricao" name="descricao" maxlength="1000" rows="3" placeholder="Descreva a observação" required></textarea>
+               </div>
+               <button type="submit" class="btn btn--principal">Registrar observação</button>
+            </form>
+            <ul id="lista-observacoes" class="registros" aria-live="polite"></ul>
+         </section>
+
+         <!-- Prestadores -->
+         <section class="cartao" aria-labelledby="titulo-prestadores">
+            <h2 id="titulo-prestadores">Prestadores de serviço <span class="contador" id="contador-prestadores">0</span></h2>
+            <form id="form-prestadores" data-secao="prestadores">
+               <div class="campo">
+                  <label for="prestador-empresa">Empresa</label>
+                  <input type="text" id="prestador-empresa" name="empresa" placeholder="Empresa ou prestador" required>
+               </div>
+               <div class="campo">
+                  <label for="prestador-nome">Nome</label>
+                  <input type="text" id="prestador-nome" name="nome" placeholder="Nome do prestador" required>
+               </div>
+               <div class="campo">
+                  <label for="prestador-servico">Tipo de serviço</label>
+                  <textarea id="prestador-servico" name="servico" maxlength="1000" rows="3" placeholder="Tipo de serviço" required></textarea>
+               </div>
+               <button type="submit" class="btn btn--principal">Registrar serviço</button>
+            </form>
+            <ul id="lista-prestadores" class="registros" aria-live="polite"></ul>
+         </section>
+
+         <!-- Avisos -->
+         <section class="cartao" aria-labelledby="titulo-avisos">
+            <h2 id="titulo-avisos">Avisos <span class="contador" id="contador-avisos">0</span></h2>
+            <form id="form-avisos" data-secao="avisos">
+               <div class="campos">
+                  <div class="campo">
+                     <label for="aviso-assunto">Assunto</label>
+                     <input type="text" id="aviso-assunto" name="assunto" placeholder="Ex.: manutenção do elevador" required>
+                  </div>
+                  <div class="campo">
+                     <label for="aviso-destino">Destinatário</label>
+                     <select id="aviso-destino" name="destino" required>
+                        <option value="">Selecionar</option>
+                        <option value="Próximo plantão">Próximo plantão</option>
+                        <option value="Moradores">Moradores</option>
+                        <option value="Administração">Administração</option>
+                     </select>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="aviso-descricao">Descrição</label>
+                     <textarea id="aviso-descricao" name="descricao" maxlength="1000" rows="3" placeholder="Descreva o aviso" required></textarea>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar aviso</button>
+               </div>
+            </form>
+            <ul id="lista-avisos" class="registros" aria-live="polite"></ul>
+         </section>
+
+      </div>
+   </main>
+
+   <footer class="rodape">
+      <img src="../img/logo-footer-removebg-preview.png" alt="Logo GS Interactive">
+   </footer>
+
+   <nav class="barra-acoes" aria-label="Ações do plantão">
+      <button type="button" id="btn-limpar" class="btn btn--perigo">Limpar plantão</button>
+      <button type="button" id="btn-enviar-plantao" class="btn btn--sucesso">Enviar plantão via WhatsApp</button>
+   </nav>
+
+   <div id="aviso" class="aviso" role="status" hidden></div>
+
+   <script charset="UTF-8" src="../js/dados.js"></script>
+   <script charset="UTF-8" src="../js/storage.js"></script>
+   <script charset="UTF-8" src="../js/whatsapp.js"></script>
+   <script charset="UTF-8" src="../js/plantao.js"></script>
+</body>
+</html>
