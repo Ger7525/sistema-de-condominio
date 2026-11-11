@@ -19,12 +19,31 @@
       return d;
    }
    function tituloMorador(r) { return "Apto " + r.apto; }
+   /* Versões usadas dentro do grupo do apartamento (o apto já está no cabeçalho) */
+   function tituloItem(r) { return r.nome + (r.avulso ? " (não cadastrado)" : ""); }
+   function detalhesItem(r) { return detalhesMorador(r).slice(1); }
+   function retiradaLinha(r) { return "Retirado por: " + r.retiradoPor + " · " + r.horaRetirada; }
+   function detalhesEntregue(r) { return detalhesMorador(r).concat([retiradaLinha(r)]); }
 
    const SECOES = {
-      entregas:        { morador: true, titulo: tituloMorador, detalhes: detalhesMorador },
-      correspondencias:{ morador: true, titulo: tituloMorador, detalhes: detalhesMorador },
+      /* agrupar: true = um cartão por apartamento, em ordem (ver prioridadeApartamentos em dados.js) */
+      entregas:        { agrupar: true, morador: true, entregar: true, titulo: tituloMorador, detalhes: detalhesMorador,
+                         tituloItem: tituloItem, detalhesItem: detalhesItem },
+      entregues:       { agrupar: true, desfazer: true, titulo: tituloMorador, detalhes: detalhesEntregue,
+                         tituloItem: tituloItem, detalhesItem: function (r) { return detalhesItem(r).concat([retiradaLinha(r)]); } },
+      correspondencias:{ agrupar: true, morador: true, titulo: tituloMorador, detalhes: detalhesMorador,
+                         tituloItem: tituloItem, detalhesItem: detalhesItem },
       /* Sem "morador: true" = sem botão de WhatsApp */
-      recolhimentos:   { titulo: tituloMorador, detalhes: detalhesMorador },
+      recolhimentos:   { agrupar: true, titulo: tituloMorador, detalhes: detalhesMorador,
+                         tituloItem: tituloItem, detalhesItem: detalhesItem },
+      ocorrenciasMoradores: {
+         agrupar: true,
+         documento: true,
+         titulo: function (r) { return "Apto " + r.apto + " · " + r.nome; },
+         detalhes: function (r) { return [r.descricao]; },
+         tituloItem: function (r) { return r.nome; },
+         detalhesItem: function (r) { return [r.descricao]; }
+      },
       ocorrencias: {
          titulo: function (r) { return r.tipo; },
          detalhes: function (r) { return [r.descricao]; }
@@ -133,42 +152,94 @@
       return b;
    }
 
+   function criarRegistro(secao, r, agrupado) {
+      const cfg = SECOES[secao];
+      const li = document.createElement("li");
+      li.className = "registro";
+
+      const corpo = document.createElement("div");
+      corpo.className = "registro__corpo";
+
+      const topo = document.createElement("strong");
+      topo.textContent = agrupado ? cfg.tituloItem(r) : cfg.titulo(r);
+      const hora = document.createElement("span");
+      hora.className = "registro__hora";
+      hora.textContent = r.hora;
+      topo.appendChild(hora);
+      corpo.appendChild(topo);
+
+      (agrupado ? cfg.detalhesItem(r) : cfg.detalhes(r)).forEach(function (linha) {
+         const p = document.createElement("p");
+         p.textContent = linha;
+         corpo.appendChild(p);
+      });
+
+      if (r.assinatura) {
+         const img = document.createElement("img");
+         img.className = "registro__assinatura";
+         img.src = r.assinatura;
+         img.alt = "Assinatura de " + r.nome;
+         corpo.appendChild(img);
+      }
+
+      const acoes = document.createElement("div");
+      acoes.className = "registro__acoes";
+      if (cfg.morador) {
+         acoes.appendChild(botao("WhatsApp", "btn--sucesso", function () { enviar(secao, r); }));
+      }
+      let caixaRetirada = null;
+      if (cfg.entregar) {
+         caixaRetirada = criarCaixaRetirada(r);
+         acoes.appendChild(botao("Entregar", "btn--principal", function () {
+            caixaRetirada.hidden = !caixaRetirada.hidden;
+            if (!caixaRetirada.hidden) caixaRetirada.querySelector("input").focus();
+         }));
+      }
+      if (cfg.desfazer) {
+         acoes.appendChild(botao("Desfazer", "btn--secundario", function () { desfazerEntrega(r); }));
+      }
+      if (cfg.documento) {
+         acoes.appendChild(botao("WhatsApp", "btn--sucesso", function () { enviarOcorrenciaMorador(r); }));
+         acoes.appendChild(botao("PDF", "btn--principal", function () { enviarPdfOcorrencia(r); }));
+      }
+      acoes.appendChild(botao("Remover", "btn--perigo", function () { remover(secao, r.id); }));
+
+      li.append(corpo, acoes);
+      if (caixaRetirada) li.appendChild(caixaRetirada);
+      return li;
+   }
+
+   function criarGrupo(secao, g) {
+      const li = document.createElement("li");
+      li.className = "grupo";
+
+      const cab = document.createElement("div");
+      cab.className = "grupo__cabecalho";
+      const titulo = document.createElement("strong");
+      titulo.textContent = "Apto " + g.apto;
+      const total = document.createElement("span");
+      total.className = "grupo__total";
+      total.textContent = g.itens.length + (g.itens.length === 1 ? " registro" : " registros");
+      cab.append(titulo, total);
+
+      const itens = document.createElement("ul");
+      itens.className = "grupo__itens";
+      g.itens.forEach(function (r) { itens.appendChild(criarRegistro(secao, r, true)); });
+
+      li.append(cab, itens);
+      return li;
+   }
+
    function desenhar(secao) {
       const cfg = SECOES[secao];
       const ul = $("lista-" + secao);
       ul.replaceChildren();
 
-      plantao[secao].slice().reverse().forEach(function (r) {
-         const li = document.createElement("li");
-         li.className = "registro";
-
-         const corpo = document.createElement("div");
-         corpo.className = "registro__corpo";
-
-         const topo = document.createElement("strong");
-         topo.textContent = cfg.titulo(r);
-         const hora = document.createElement("span");
-         hora.className = "registro__hora";
-         hora.textContent = r.hora;
-         topo.appendChild(hora);
-         corpo.appendChild(topo);
-
-         cfg.detalhes(r).forEach(function (linha) {
-            const p = document.createElement("p");
-            p.textContent = linha;
-            corpo.appendChild(p);
-         });
-
-         const acoes = document.createElement("div");
-         acoes.className = "registro__acoes";
-         if (cfg.morador) {
-            acoes.appendChild(botao("WhatsApp", "btn--sucesso", function () { enviar(secao, r); }));
-         }
-         acoes.appendChild(botao("Remover", "btn--perigo", function () { remover(secao, r.id); }));
-
-         li.append(corpo, acoes);
-         ul.appendChild(li);
-      });
+      if (cfg.agrupar) {
+         Whats.agruparPorApto(plantao[secao]).forEach(function (g) { ul.appendChild(criarGrupo(secao, g)); });
+      } else {
+         plantao[secao].slice().reverse().forEach(function (r) { ul.appendChild(criarRegistro(secao, r, false)); });
+      }
 
       $("contador-" + secao).textContent = plantao[secao].length;
    }
@@ -181,12 +252,106 @@
       desenhar(secao);
    }
 
+   /* ---------- Entregar: registra quem retirou e move para a lista de retiradas ---------- */
+   function criarCaixaRetirada(r) {
+      const caixa = document.createElement("div");
+      caixa.className = "retirada";
+      caixa.hidden = true;
+
+      const campo = document.createElement("div");
+      campo.className = "campo";
+      const idCampo = "retirada-" + String(r.id).replace(/\D/g, "");
+      const rotulo = document.createElement("label");
+      rotulo.htmlFor = idCampo;
+      rotulo.textContent = "Quem retirou a entrega?";
+      const entrada = document.createElement("input");
+      entrada.type = "text";
+      entrada.id = idCampo;
+      entrada.maxLength = 80;
+      entrada.placeholder = "Nome de quem retirou";
+      entrada.autocomplete = "off";
+      campo.append(rotulo, entrada);
+
+      function confirmar() {
+         const nome = entrada.value.trim();
+         if (!nome) { avisar("Informe o nome de quem retirou."); entrada.focus(); return; }
+         entregarItem(r, nome);
+      }
+      entrada.addEventListener("keydown", function (e) {
+         if (e.key === "Enter") { e.preventDefault(); confirmar(); }
+      });
+
+      caixa.append(
+         campo,
+         botao("Confirmar", "btn--sucesso", confirmar),
+         botao("Cancelar", "btn--secundario", function () { entrada.value = ""; caixa.hidden = true; })
+      );
+      return caixa;
+   }
+
+   function entregarItem(r, nome) {
+      plantao.entregas = plantao.entregas.filter(function (x) { return x.id !== r.id; });
+      plantao.entregues.push(Object.assign({}, r, {
+         retiradoPor: nome,
+         dataRetirada: dataHoje(),
+         horaRetirada: horaAgora()
+      }));
+      salvar();
+      desenhar("entregas");
+      desenhar("entregues");
+      avisar("Entrega registrada como retirada.");
+   }
+
+   function desfazerEntrega(r) {
+      plantao.entregues = plantao.entregues.filter(function (x) { return x.id !== r.id; });
+      const original = Object.assign({}, r);
+      delete original.retiradoPor;
+      delete original.dataRetirada;
+      delete original.horaRetirada;
+      plantao.entregas.push(original);
+      salvar();
+      desenhar("entregas");
+      desenhar("entregues");
+      avisar("Entrega devolvida para a lista.");
+   }
+
    /* ---------- WhatsApp ---------- */
    function enviar(secao, registro) {
       const texto = secao === "correspondencias"
          ? Whats.mensagemCorrespondencia(registro, operador)
          : Whats.mensagemEntrega(registro, operador);
       Whats.abrir(registro.telefone, texto);
+   }
+
+   /* ---------- Ocorrências de moradores (assinatura, mensagem e PDF) ---------- */
+   const pad = Assinatura.iniciar($("ocmor-assinatura"));
+   const destinoOcorrencias = function () { return DADOS.whatsappOcorrencias || DADOS.whatsappRelatorio; };
+
+   $("ocmor-limpar-assinatura").addEventListener("click", pad.limpar);
+   function atualizarContagem() {
+      $("ocmor-contagem").textContent = $("ocmor-descricao").value.length + " / 1000";
+   }
+   $("ocmor-descricao").addEventListener("input", atualizarContagem);
+   $("form-ocorrenciasMoradores").addEventListener("reset", function () {
+      pad.limpar();
+      setTimeout(atualizarContagem, 0);
+   });
+
+   function resultadoPdf(resultado) {
+      if (resultado === "baixado") avisar("PDF gerado. Anexe o arquivo na conversa do WhatsApp.");
+      else if (resultado === "compartilhado") avisar("PDF compartilhado.");
+   }
+
+   function enviarOcorrenciaMorador(r) {
+      Whats.abrir(destinoOcorrencias(), Whats.mensagemOcorrenciaMorador(r, operador));
+   }
+   function enviarPdfOcorrencia(r) {
+      Documentos.enviar(
+         Documentos.ocorrenciaMorador(r, operador),
+         "ocorrencia-apto-" + r.apto + "-" + (r.data || dataHoje()) + ".pdf",
+         Whats.mensagemOcorrenciaMorador(r, operador),
+         destinoOcorrencias()
+      ).then(resultadoPdf);
    }
 
    /* ---------- Formulários de registro ---------- */
@@ -214,6 +379,11 @@
          dados.data = dataHoje();
          dados.porteiro = operador.nome;
       }
+      if (secao === "ocorrenciasMoradores") {
+         dados.data = dataHoje();
+         dados.porteiro = operador.nome;
+         dados.assinatura = pad.imagem();
+      }
       return Object.assign({ id: Date.now() + Math.random(), hora: horaAgora() }, dados);
    }
 
@@ -223,6 +393,11 @@
 
       form.addEventListener("submit", function (ev) {
          ev.preventDefault();
+         if (secao === "ocorrenciasMoradores" && pad.vazio()) {
+            avisar("Peça ao morador para assinar no quadro.");
+            enviarApos = false;
+            return;
+         }
          const registro = coletar(secao, form);
 
          if (secao === "correspondencias" && registro.tipo === TIPO_AVISO && !registro.descricao) {
@@ -238,8 +413,15 @@
          form.reset();
          if (form.classList.contains("formulario-avulso")) fecharAvulso(form);
          avisar("Registro adicionado.");
-         if (enviarApos && SECOES[secao].morador) enviar(secao, registro);
+         const modo = enviarApos;
          enviarApos = false;
+         if (modo) {
+            if (secao === "ocorrenciasMoradores") {
+               if (modo === "pdf") enviarPdfOcorrencia(registro); else enviarOcorrenciaMorador(registro);
+            } else if (SECOES[secao].morador) {
+               enviar(secao, registro);
+            }
+         }
       });
    });
 
@@ -252,7 +434,7 @@
             tel.focus();
             return;
          }
-         enviarApos = true;
+         enviarApos = botaoEnviar.dataset.enviar || "whats";
          if (form.checkValidity()) { form.requestSubmit(); }
          else { enviarApos = false; form.reportValidity(); }
       });
@@ -294,17 +476,32 @@
    $("porteiro-entrando").addEventListener("change", function (e) { plantao.entrando = e.target.value; salvar(); });
 
    /* ---------- Barra de ações ---------- */
-   $("btn-enviar-plantao").addEventListener("click", function () {
+   function plantaoPronto() {
       if (!plantao.saindo || !plantao.entrando) {
          avisar("Informe o porteiro saindo e o entrando antes de enviar.");
          $(plantao.saindo ? "porteiro-entrando" : "porteiro-saindo").focus();
-         return;
+         return false;
       }
       if (plantao.saindo === plantao.entrando) {
          avisar("O porteiro saindo e o entrando não podem ser a mesma pessoa.");
-         return;
+         return false;
       }
+      return true;
+   }
+
+   $("btn-enviar-plantao").addEventListener("click", function () {
+      if (!plantaoPronto()) return;
       Whats.abrir(DADOS.whatsappRelatorio, Whats.mensagemPlantao(plantao, operador));
+   });
+
+   $("btn-enviar-plantao-pdf").addEventListener("click", function () {
+      if (!plantaoPronto()) return;
+      Documentos.enviar(
+         Documentos.plantao(plantao, operador),
+         "plantao-" + plantao.data + ".pdf",
+         "Passagem de plantão – " + DADOS.condominio + " – " + Whats.formatarData(plantao.data),
+         DADOS.whatsappRelatorio
+      ).then(resultadoPdf);
    });
 
    $("btn-limpar").addEventListener("click", function () {

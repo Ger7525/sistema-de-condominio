@@ -11,7 +11,7 @@
 </head>
 <body class="pagina-plantao">
    <header class="cabecalho">
-      <img class="logo" src="../img/morada_sul-removebg-preview.png" alt="Logo do Edifício Laguna Hall">
+      <img class="logo" src="../img/logo-laguna-hall.png" alt="Logo do Edifício Laguna Hall">
       <h1>Edifício Laguna Hall</h1>
    </header>
 
@@ -117,6 +117,9 @@
                </div>
             </form>
             <ul id="lista-entregas" class="registros" aria-live="polite"></ul>
+
+            <h3 class="subtitulo-lista">Entregas retiradas <span class="contador" id="contador-entregues">0</span></h3>
+            <ul id="lista-entregues" class="registros" aria-live="polite"></ul>
          </section>
 
          <!-- Correspondências e avisos -->
@@ -226,6 +229,43 @@
             <ul id="lista-recolhimentos" class="registros" aria-live="polite"></ul>
          </section>
 
+         <!-- Ocorrências de moradores -->
+         <section class="cartao cartao--largo" aria-labelledby="titulo-ocorrenciasMoradores">
+            <h2 id="titulo-ocorrenciasMoradores">Ocorrências de moradores <span class="contador" id="contador-ocorrenciasMoradores">0</span></h2>
+            <form id="form-ocorrenciasMoradores" data-secao="ocorrenciasMoradores">
+               <div class="campos">
+                  <div class="campo">
+                     <label for="ocmor-apto">Apto</label>
+                     <select id="ocmor-apto" name="apto" required><option value="">Apto</option></select>
+                  </div>
+                  <div class="campo">
+                     <label for="ocmor-nome">Nome do morador</label>
+                     <input type="text" id="ocmor-nome" name="nome" list="lista-moradores-ocmor" placeholder="Nome" autocomplete="off" required>
+                     <datalist id="lista-moradores-ocmor"></datalist>
+                  </div>
+                  <div class="campo campo--largo">
+                     <label for="ocmor-descricao">Ocorrência</label>
+                     <textarea id="ocmor-descricao" name="descricao" maxlength="1000" rows="5" placeholder="Descreva a ocorrência" required></textarea>
+                     <small class="contagem" id="ocmor-contagem">0 / 1000</small>
+                  </div>
+                  <div class="campo campo--largo">
+                     <span class="rotulo">Assinatura do morador</span>
+                     <canvas id="ocmor-assinatura" class="assinatura" width="800" height="240" role="img" aria-label="Quadro de assinatura do morador"></canvas>
+                     <div class="assinatura__acoes">
+                        <button type="button" id="ocmor-limpar-assinatura" class="btn btn--mini btn--secundario">Limpar assinatura</button>
+                        <span class="dica">Assine com o dedo, a caneta ou o mouse</span>
+                     </div>
+                  </div>
+               </div>
+               <div class="acoes">
+                  <button type="submit" class="btn btn--principal">Registrar</button>
+                  <button type="button" class="btn btn--sucesso" data-enviar="whats">Enviar via WhatsApp</button>
+                  <button type="button" class="btn btn--sucesso" data-enviar="pdf">Gerar PDF e enviar via WhatsApp</button>
+               </div>
+            </form>
+            <ul id="lista-ocorrenciasMoradores" class="registros" aria-live="polite"></ul>
+         </section>
+
          <!-- Ocorrências -->
          <section class="cartao" aria-labelledby="titulo-ocorrencias">
             <h2 id="titulo-ocorrencias">Ocorrências <span class="contador" id="contador-ocorrencias">0</span></h2>
@@ -315,12 +355,13 @@
    </main>
 
    <footer class="rodape">
-      <img src="../img/logo-footer-removebg-preview.png" alt="Logo GS Interactive">
+      <img src="../img/logo-footer.png" alt="Logo GS Interactive">
    </footer>
 
    <nav class="barra-acoes" aria-label="Ações do plantão">
       <button type="button" id="btn-limpar" class="btn btn--perigo">Limpar plantão</button>
       <button type="button" id="btn-enviar-plantao" class="btn btn--sucesso">Enviar plantão via WhatsApp</button>
+      <button type="button" id="btn-enviar-plantao-pdf" class="btn btn--principal">Enviar plantão em PDF</button>
    </nav>
 
    <div id="aviso" class="aviso" role="status" hidden></div>
@@ -328,6 +369,9 @@
    <script charset="UTF-8" src="../js/dados.js"></script>
    <script charset="UTF-8" src="../js/storage.js"></script>
    <script charset="UTF-8" src="../js/whatsapp.js"></script>
+   <script charset="UTF-8" src="../js/pdf.js"></script>
+   <script charset="UTF-8" src="../js/assinatura.js"></script>
+   <script charset="UTF-8" src="../js/documentos.js"></script>
    <script charset="UTF-8" src="../js/plantao.js"></script>
 </body>
 </html>

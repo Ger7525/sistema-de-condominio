@@ -132,7 +132,7 @@ form > .campo + .btn { margin-top: 12px; }
 .campo--linha { flex-direction: row; align-items: center; gap: 10px; }
 .campo--linha select { flex: 1; }
 
-label { color: var(--cor-texto-destaque); font-weight: 700; }
+label, .rotulo { color: var(--cor-texto-destaque); font-weight: 700; }
 
 input, select, textarea {
    width: 100%;
@@ -234,6 +234,79 @@ body.pagina-plantao { padding-bottom: 90px; }
    color: var(--cor-texto-destaque);
    margin-bottom: 12px;
 }
+
+/* Ocorrências de moradores: assinatura */
+.assinatura {
+   display: block;
+   width: 100%;
+   max-width: 800px;
+   aspect-ratio: 10 / 3;
+   background-color: #FFFFFF;
+   border: 2px solid var(--cor-borda);
+   border-radius: var(--raio-pequeno);
+   cursor: crosshair;
+   touch-action: none;
+}
+.assinatura__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 6px; }
+.dica, .contagem { color: var(--cor-texto-secundario); font-size: 0.85rem; }
+.contagem { text-align: right; }
+.registro__assinatura {
+   display: block;
+   max-width: 220px;
+   max-height: 64px;
+   margin-top: 8px;
+   background-color: #FFFFFF;
+   border-radius: 4px;
+}
+
+/* Grupo por apartamento */
+.grupo {
+   background-color: var(--cor-cartao);
+   border: 1px solid var(--cor-divisoria);
+   border-left: 4px solid var(--azul-eletrico);
+   border-radius: var(--raio-pequeno);
+   padding: 12px;
+}
+.grupo__cabecalho {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: baseline;
+   justify-content: space-between;
+   gap: 8px;
+   padding-bottom: 8px;
+   border-bottom: 1px solid var(--cor-divisoria);
+   font-family: var(--fonte-subtitulo);
+   font-size: 1.3rem;
+   color: var(--cor-texto-destaque);
+}
+.grupo__total { font-family: var(--fonte-texto); font-size: 0.85rem; color: var(--cor-texto-secundario); }
+.grupo__itens { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.grupo .registro { background-color: var(--cor-campo); border-left-width: 3px; }
+#lista-entregues .grupo { border-left-color: var(--verde-tecnologico); }
+
+/* Entregas retiradas */
+.subtitulo-lista {
+   font-family: var(--fonte-subtitulo);
+   font-size: 1.4rem;
+   color: var(--cor-texto-destaque);
+   margin-top: 28px;
+   padding-top: 18px;
+   border-top: 1px solid var(--cor-divisoria);
+}
+.subtitulo-lista .contador { font-size: 0.8rem; }
+#lista-entregues:empty::before { content: "Nenhuma entrega retirada ainda."; }
+#lista-entregues .registro { border-left-color: var(--verde-tecnologico); }
+.retirada {
+   flex-basis: 100%;
+   display: flex;
+   flex-wrap: wrap;
+   align-items: flex-end;
+   gap: 8px;
+   padding-top: 10px;
+   border-top: 1px dashed var(--cor-borda-ativa);
+}
+.retirada .campo { flex: 1 1 240px; }
+.retirada[hidden] { display: none; }
 
 /* Lista de registros */
 .registros { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
